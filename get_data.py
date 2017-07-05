@@ -1,35 +1,75 @@
-import requests
-import json
-import pandas as pd
+import re
 import urllib2
-from bs4 import BeautifulSoup as BS
+import calendar
+import datetime
+import getopt
+import sys
+import time
 
-def get_stats(ticker):
-
-    other_details_json_link = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/{0}?formatted=true&lang=en-US&region=US&modules=summaryProfile%2CfinancialData%2CrecommendationTrend%2CupgradeDowngradeHistory%2Cearnings%2CdefaultKeyStatistics%2CcalendarEvents&corsDomain=finance.yahoo.com".format(ticker)
-    summary_json_response = requests.get(other_details_json_link)
-
-    return  json.loads(summary_json_response.text)['quoteSummary']['result']
-
-
-def get_prices(ticker):
-
-    page = urllib2.urlopen('https://finance.yahoo.com/quote/{}/history?p={}'.format(ticker,ticker))
-    soup = BS(page, 'html.parser')
-    table = soup.find_all('table')[1]
+crumble_link = 'https://finance.yahoo.com/quote/{0}/history?p={0}'
+crumble_regex = r'CrumbStore":{"crumb":"(.*?)"}'
+cookie_regex = r'Set-Cookie: (.*?); '
+quote_link = 'https://query1.finance.yahoo.com/v7/finance/download/{}?period1={}&period2={}&interval=1d&events=history&crumb={}'
 
 
-    table_body = table.find('tbody')
+def get_crumble_and_cookie(symbol):
+    link = crumble_link.format(symbol)
+    response = urllib2.urlopen(link)
+    match = re.search(cookie_regex, str(response.info()))
+    cookie_str = match.group(1)
+    text = response.read()
+    match = re.search(crumble_regex, text)
+    crumble_str = match.group(1)
+    return crumble_str, cookie_str
 
-    rows = table_body.find_all('tr')
 
-    data=[]
-    for row in rows:
-        cols = row.find_all('td')
-        cols = [ele.text.strip() for ele in cols]
-        data.append([ele for ele in cols if ele]) # Get rid of empty values
+def download_quote(symbol, date_from, date_to):
+    time_stamp_from = calendar.timegm(datetime.datetime.strptime(date_from, "%Y-%m-%d").timetuple())
+    time_stamp_to = calendar.timegm(datetime.datetime.strptime(date_to, "%Y-%m-%d").timetuple())
 
-    dates = [x[0] for x in data]
-    close = [x[-2] for x in data]
+    attempts = 0
+    while attempts < 5:
+        crumble_str, cookie_str = get_crumble_and_cookie(symbol)
+        link = quote_link.format(symbol, time_stamp_from, time_stamp_to, crumble_str)
+        #print link
+        r = urllib2.Request(link, headers={'Cookie': cookie_str})
 
-    return zip(dates,close)
+        try:
+            response = urllib2.urlopen(r)
+            text = response.read()
+            print "{} downloaded".format(symbol)
+            return text
+        except urllib2.URLError:
+            print "{} failed at attempt # {}".format(symbol, attempts)
+            attempts += 1
+            time.sleep(2*attempts)
+    return ""
+
+if __name__ == '__main__':
+    print get_crumble_and_cookie('KO')
+    from_arg = "from"
+    to_arg = "to"
+    symbol_arg = "symbol"
+    output_arg = "o"
+    opt_list = (from_arg+"=", to_arg+"=", symbol_arg+"=")
+    try:
+        options, args = getopt.getopt(sys.argv[1:],output_arg+":",opt_list)
+    except getopt.GetoptError as err:
+        print err
+
+    for opt, value in options:
+        if opt[2:] == from_arg:
+            from_val = value
+        elif opt[2:] == to_arg:
+            to_val = value
+        elif opt[2:] == symbol_arg:
+            symbol_val = value
+        elif opt[1:] == output_arg:
+            output_val = value
+
+    print "downloading {}".format(symbol_val)
+    text = download_quote(symbol_val, from_val, to_val)
+
+    with open('data/'+output_val, 'wb') as f:
+        f.write(text)
+    print "{} written to {}".format(symbol_val, output_val)
