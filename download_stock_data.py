@@ -7,6 +7,7 @@ from glob import glob
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from stockstats import StockDataFrame
 
 #####################################
 # Download stock data
@@ -51,14 +52,14 @@ def read_exchange(csv_file):
     exchange.sort_values('Date', inplace=True)
     
     exchange['1d_hist'] =  exchange.shift(1)['exchange_total']
-    exchange['1d_%_beurs'] =  exchange['exchange_total']/exchange['1d_hist']-1
+    exchange['1d_beurs'] =  exchange['exchange_total']/exchange['1d_hist']-1
     exchange['5d_hist'] =  exchange.shift(5)['exchange_total']
-    exchange['5d_%_beurs'] =  exchange['exchange_total']/exchange['5d_hist']-1
+    exchange['5d_beurs'] =  exchange['exchange_total']/exchange['5d_hist']-1
     exchange['21d_hist'] =  exchange.shift(21)['exchange_total']
-    exchange['21d_%_beurs'] =  exchange['exchange_total']/exchange['21d_hist']-1
+    exchange['21d_beurs'] =  exchange['exchange_total']/exchange['21d_hist']-1
     exchange['250d_hist'] =  exchange.shift(250)['exchange_total']
-    exchange['250d_%_beurs'] =  exchange['exchange_total']/exchange['250d_hist']-1
-    exchange = exchange[['Date', 'exchange_total', '1d_%_beurs', '5d_%_beurs', '21d_%_beurs', '250d_%_beurs']]    
+    exchange['250d_beurs'] =  exchange['exchange_total']/exchange['250d_hist']-1
+    exchange = exchange[['Date', 'exchange_total', '1d_beurs', '5d_beurs', '21d_beurs', '250d_beurs']]    
     
     return exchange
 
