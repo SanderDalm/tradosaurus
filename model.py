@@ -3,19 +3,122 @@ from glob import glob
 
 import pandas as pd
 import numpy as np
+from stockstats import StockDataFrame
 import matplotlib.pyplot as plt
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsRegressor, KNeighborsClassifier
+from sklearn.linear_model import LinearRegression
 
 ###############################################
 # Read stock data
 ###############################################
 
-stocks = pd.read_csv('data/stocks.csv')
+stocks = pd.read_csv('data/stocks.csv', usecols=['Date', 'Aandeel', 'Close'])
+
+stocks = StockDataFrame.retype(stocks)
+_ = stocks['macd']
+      
+stock_list = np.array(stocks.aandeel.unique().tolist())
+
+np.random.shuffle(stock_list)
+train_stocks = stock_list[:446]
+test_stocks = stock_list[446:]
+
+stocks_train = stocks[stocks.aandeel.isin(train_stocks)]
+stocks_test = stocks[stocks.aandeel.isin(test_stocks)]
+
+stocks_train['date'] = stocks_train.index
+stocks_test['date'] = stocks_test.index
+           
+###############################################
+# Create features for filtering
+###############################################
+
+def create_filter_features(df, n_future):
+    
+    df.sort_values(['aandeel','date'])
+    
+    features = []
+    labels = []
+    
+    for aandeel in tqdm(df.aandeel.unique().tolist()):
+                        
+        prices = np.array(df[df.aandeel==aandeel].close.tolist())          
+        macd = np.array(df[df.aandeel==aandeel].macdh.tolist())  
+        ema12 = np.array(df[df.aandeel==aandeel].close_12_ema.tolist())  
+        ema26 = np.array(df[df.aandeel==aandeel].close_26_ema.tolist())  
+        
+        cursor = 2
+        offset = 10
+        
+        while cursor < len(prices)-n_future:
+                        
+            # Create index features from ema
+            macd_change = macd[cursor]-macd[cursor-1]            
+            #if macd[cursor]>macd[cursor-1]:
+            #    macd_change=1
+            #else:
+            #    macd_change=0
+            
+            ema_ratio = ema12[cursor]/ema26[cursor]
+            
+            #if ema12[cursor]>ema26[cursor]:
+            #    ema_ratio=1
+            #else:
+            #    ema_ratio=0
+
+            features.append([macd_change, ema_ratio])
+            
+            # Calculate price change
+            label = prices[cursor+n_future]/prices[cursor]
+            #if prices[cursor+n_future]/prices[cursor]>1:
+            #    label=1
+            #else: label=0
+                
+            labels.append(label)
+            cursor += offset
+            
+    return np.array(features), np.array(labels)
+       
+
+###############################################
+# Fit models
+###############################################     
+
+features_train, labels_train = create_filter_features(stocks_train, 10)
+features_test, labels_test = create_filter_features(stocks_test, 10)
+
+model = LinearRegression()
+model.fit(features_train, labels_train)
+model.score(features_test, labels_test)
+plt.scatter(model.predict(features_test), labels_test)
+
+#temp = np.concatenate([features_train, labels_train.reshape([len(labels_train),1])], axis=1)
+#
+#temp0 = temp[temp[:,0]==0]
+#temp0 = temp0[temp0[:,1]==0]
+#
+#temp1 = temp[temp[:,0]==1]
+#temp1 = temp1[temp1[:,1]==0]
+#
+#temp2 = temp[temp[:,0]==0]
+#temp2 = temp2[temp2[:,1]==1]
+#
+#temp3 = temp[temp[:,0]==1]
+#temp3 = temp3[temp3[:,1]==1]
+#
+#np.mean(temp0[:,2])
+#np.mean(temp1[:,2])
+#np.mean(temp2[:,2])
+#np.mean(temp3[:,2])
 
 ###############################################
 # Create features for NN
 ###############################################
 
-def create_features(df, n_hist):
+def create_nn_features(df, n_hist):
+    
+    df.sort_values(['Aandeel','Date'])
     
     features = []
     labels = []
