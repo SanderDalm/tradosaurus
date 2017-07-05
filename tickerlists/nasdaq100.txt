@@ -1,0 +1,107 @@
+AAL	American Airlines Group Inc	50.38	 	-0.01	-0.02%
+AAPL	Apple Inc	143.20	 	-0.30	-0.21%
+ADBE	Adobe Systems Inc	140.53	 	2.12	1.53%
+ADI	Analog Devices Inc	76.99	 	0.88	1.16%
+ADP	Automatic Data Processing Inc	103.17	 	0.75	0.73%
+ADSK	Autodesk Inc	99.97	 	0.61	0.61%
+AKAM	Akamai Technologies Inc	50.25	 	0.16	0.32%
+ALXN	Alexion Pharmaceuticals Inc	121.8499	 	0.7699	0.64%
+AMAT	Applied Materials Inc	41.6457	 	0.6357	1.55%
+AMGN	Amgen Inc	172.17	 	-0.63	-0.36%
+AMZN	Amazon.com Inc	958.74	 	5.08	0.53%
+ATVI	Activision Blizzard Inc	56.59	 	0.33	0.59%
+AVGO	Broadcom Ltd	230.47	 	0.71	0.31%
+BIDU	Baidu Inc	184.8074	 	4.8374	2.69%
+BIIB	Biogen Inc	273.44	 	0.92	0.34%
+BMRN	Biomarin Pharmaceutical Inc	90.77	 	0.26	0.29%
+CA	CA Inc	33.855	 	-0.305	-0.89%
+CELG	Celgene Corp	130.60	 	0.42	0.32%
+CERN	Cerner Corp	65.67	 	0.17	0.26%
+CHKP	Check Point Software Technologies Ltd	109.83	 	1.73	1.60%
+CHTR	Charter Communications Inc	330.19	 	1.52	0.46%
+CTRP	Ctrip.Com International Ltd	53.50	 	-0.37	-0.69%
+CTAS	Cintas Corp	126.11	 	0.12	0.10%
+CSCO	Cisco Systems Inc	30.89	 	-0.15	-0.48%
+CTXS	Citrix Systems Inc	78.67	 	-0.11	-0.14%
+CMCSA	Comcast Corp	38.44	 	0.08	0.21%
+COST	Costco Wholesale Corp	158.59	 	-0.23	-0.14%
+CSX	CSX Corp	54.8393	 	0.3493	0.64%
+CTSH	Cognizant Technology Solutions Corp	66.36	 	-0.34	-0.51%
+DISCA	Discovery Communications Inc	26.11	 	-0.09	-0.34%
+DISCK	Discovery Communications Inc	25.43	 	-0.08	-0.31%
+DISH	DISH Network Corp	62.47	 	-0.41	-0.65%
+DLTR	Dollar Tree Inc	68.805	 	-1.085	-1.55%
+EA	Electronic Arts	105.5401	 	0.1201	0.11%
+EBAY	eBay Inc	34.595	 	-0.005	-0.01%
+ESRX	Express Scripts Holding Co	63.51	 	-0.41	-0.64%
+EXPE	Expedia Inc	148.15	 	0.42	0.28%
+FAST	Fastenal Co	43.66	 	-0.39	-0.89%
+FB	Facebook	148.98	 	0.55	0.37%
+FISV	Fiserv Inc	121.78	 	0.47	0.39%
+FOX	21st Century Fox Class B	27.86	 	-0.27	-0.96%
+FOXA	21st Century Fox Class A	28.27	 	-0.25	-0.88%
+GILD	Gilead Sciences Inc	70.275	 	-0.425	-0.60%
+GOOG	Alphabet Class C	901.42	 	2.72	0.30%
+GOOGL	Alphabet Class A	921.30	 	1.84	0.20%
+HAS	Hasbro Inc	110.99	 	0.25	0.23%
+HSIC	Henry Schein Inc	182.50	 	0.53	0.29%
+HOLX	Hologic Inc	44.865	 	0.135	0.30%
+ILMN	Illumina Inc	172.43	 	-1.70	-0.98%
+INCY	Incyte Corp	126.2485	 	0.3785	0.30%
+INTC	Intel Corp	33.61	 	0.15	0.45%
+INTU	Intuit Inc	131.48	 	-0.20	-0.15%
+ISRG	Intuitive Surgical Inc	935.10	 	13.44	1.46%
+JBHT	J.B. Hunt Transport Services Inc	93.11	 	-0.11	-0.12%
+JD	JD.com Inc	38.81	 	-0.05	-0.13%
+KLAC	KLA-Tencor Corp	90.88	 	-0.67	-0.73%
+KHC	Kraft Heinz Co	84.40	 	-0.07	-0.08%
+LBTYK	Liberty Global PLC	30.94	 	-0.06	-0.19%
+LILA	Liberty Global PLC	21.74	 	-0.36	-1.63%
+LBTYA	Liberty Global PLC	31.96	 	0.02	0.06%
+QVCA	Liberty Interactive Corp	24.375	 	0.015	0.06%
+MELI	MercadoLibre Inc	250.16	 	-0.52	-0.21%
+MAR	Marriott International Inc	100.31	 	0.20	0.20%
+MAT	Mattel Inc	20.9534	 	-0.0366	-0.17%
+MDLZ	Mondelez International Inc	43.12	 	-0.08	-0.19%
+MNST	Monster Beverage Corp	49.40	 	-0.32	-0.64%
+MSFT	Microsoft Corp	68.60	 	0.43	0.63%
+MU	Micron Technology Inc	30.07	 	0.93	3.19%
+MXIM	Maxim Integrated Products Inc	44.73	 	0.54	1.22%
+MYL	Mylan NV	38.15	 	-0.66	-1.70%
+NCLH	Norwegian Cruise Line Holdings Ltd	54.85	 	0.30	0.55%
+NFLX	Netflix Inc	146.705	 	0.535	0.37%
+NTES	NetEase Inc	292.32	 	-4.51	-1.52%
+NVDA	NVIDIA Corp	142.69	 	3.36	2.41%
+PAYX	Paychex Inc	56.48	 	-0.05	-0.09%
+PCLN	The Priceline Group	1845.02	 	1.89	0.10%
+PYPL	PayPal Holdings Inc	53.87	 	1.00	1.89%
+QCOM	Qualcomm Inc	55.00	 	0.05	0.09%
+REGN	Regeneron Pharmaceuticals Inc	492.03	 	4.30	0.88%
+ROST	Ross Stores Inc	57.65	 	-0.58	-1.00%
+SHPG	Shire PLC	165.58	 	1.56	0.95%
+SIRI	Sirius XM Holdings Inc	5.38	
+UNCH	0%
+SWKS	Skyworks Solutions Inc	96.39	 	1.05	1.10%
+SBUX	Starbucks Corp	58.17	 	-0.08	-0.14%
+SYMC	Symantec Corp	27.535	 	0.065	0.24%
+TSCO	Tractor Supply Co	54.07	 	-0.89	-1.62%
+TXN	Texas Instruments Inc	76.75	 	0.34	0.44%
+TMUS	T-Mobile US Inc	59.6095	 	-0.3905	-0.65%
+ULTA	Ulta Beauty Inc	281.07	 	-2.29	-0.81%
+VIAB	Viacom Inc	33.47	 	-0.65	-1.91%
+VOD	Vodafone Group PLC	28.5841	 	-0.0959	-0.33%
+VRTX	Vertex Pharmaceuticals Inc	128.05	 	-0.18	-0.14%
+WBA	Walgreens Boots Alliance Inc	78.40	 	0.27	0.35%
+WDC	Western Digital Corp	85.07	 	-0.22	-0.26%
+XRAY	Dentsply Sirona Inc	64.66	 	0.03	0.05%
+IDXX	IDEXX Laboratories Inc	160.335	 	1.015	0.64%
+LILAK	Liberty Global PLC	21.32	 	-0.30	-1.39%
+LRCX	Lam Research Corp	140.4901	 	1.2001	0.86%
+MCHP	Microchip Technology Inc	76.61	 	0.80	1.06%
+ORLY	O'Reilly Automotive Inc	182.85	 	-37.56	-17.04%
+PCAR	PACCAR Inc	66.21	 	-0.79	-1.18%
+STX	Seagate Technology PLC	38.2793	 	-0.3107	-0.81%
+TSLA	Tesla Inc	334.5073	 	-18.1127	-5.14%
+VRSK	Verisk Analytics Inc	84.33	 	0.16	0.19%
+WYNN	Wynn Resorts Ltd	130.3875	 	-0.6225	-0.48%
+XLNX	Xilinx Inc	63.93	 	0.67	1.06%
