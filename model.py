@@ -45,9 +45,11 @@ def create_filter_features(df, n_future):
 
         temp_df = df[df.aandeel==aandeel]
         _ = temp_df['macd']
+        _ = temp_df['rsi_14']
 
         prices = np.array(temp_df.close.tolist())
         macd = np.array(temp_df.macdh.tolist())
+        rsi = np.array(temp_df.rsi_14.tolist())
         ema12 = np.array(temp_df.close_12_ema.tolist())
         ema26 = np.array(temp_df.close_26_ema.tolist())
         ema26 = np.array(temp_df.close_26_ema.tolist())
@@ -72,6 +74,7 @@ def create_filter_features(df, n_future):
 
             # Create index features from ema
             macd_change = macd[cursor]-macd[cursor-1]
+            rsi_feature = rsi[cursor]
             ema_ratio = ema12[cursor]/ema26[cursor]-1
             ema12_diff = ema12[cursor]/ema12[cursor-1]-1
             ema26_diff = ema26[cursor]/ema26[cursor-1]-1
@@ -95,7 +98,7 @@ def create_filter_features(df, n_future):
             #            else:
             #                beurs21d_feature = 0
 
-            features.append([macd_change, ema_ratio, ema12_diff, ema26_diff, beurs1d_feature, beurs5d_feature, beurs21d_feature])
+            features.append([macd_change, rsi_feature, ema_ratio, ema12_diff, ema26_diff])#, beurs1d_feature, beurs5d_feature, beurs21d_feature])
 
             # Calculate price change
             label = prices[cursor+n_future]/prices[cursor]
@@ -110,8 +113,8 @@ def create_filter_features(df, n_future):
 # Fit models
 ###############################################
 
-features_train, labels_train = create_filter_features(stocks_train, 1)
-features_test, labels_test = create_filter_features(stocks_test, 1)
+features_train, labels_train = create_filter_features(stocks_train, 2)
+features_test, labels_test = create_filter_features(stocks_test, 2)
 
 model = RandomForestRegressor(n_estimators=100)
 #model = LinearRegression()
@@ -124,13 +127,14 @@ temp = np.concatenate([features_train, labels_train.reshape([len(labels_train),1
 
 # Dit werkt?
 temp0 = temp.copy()
-temp0 = temp0[temp0[:,0]<(-.3)]
-#temp0 = temp0[temp0[:,2]>.]
+temp0 = temp0[temp0[:,1]>10]
+temp0 = temp0[temp0[:,1]<30]
 
-plt.scatter(temp[:,0], temp[:,-1])
 
 np.mean(temp[:,-1])
 np.mean(temp0[:,-1])
+
+plt.scatter(temp[:,1], temp[:,-1])
 
 
 ###############################################
