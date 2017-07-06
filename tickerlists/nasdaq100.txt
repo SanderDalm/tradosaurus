@@ -80,7 +80,6 @@ REGN	Regeneron Pharmaceuticals Inc	492.03	 	4.30	0.88%
 ROST	Ross Stores Inc	57.65	 	-0.58	-1.00%
 SHPG	Shire PLC	165.58	 	1.56	0.95%
 SIRI	Sirius XM Holdings Inc	5.38	
-UNCH	0%
 SWKS	Skyworks Solutions Inc	96.39	 	1.05	1.10%
 SBUX	Starbucks Corp	58.17	 	-0.08	-0.14%
 SYMC	Symantec Corp	27.535	 	0.065	0.24%

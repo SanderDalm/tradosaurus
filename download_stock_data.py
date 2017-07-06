@@ -7,7 +7,6 @@ from glob import glob
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from stockstats import StockDataFrame
 
 #####################################
 # Download stock data
@@ -29,13 +28,13 @@ tickers = aex[:]
 tickers.extend(tickers_sp500)
 tickers.extend(tickers_ndx)
 
-
 currentDT = datetime.datetime.now()
 startdate = '2010-01-01'
 today = str(currentDT)[:10]
 
-for ticker in tickers:    
-    os.system("python get_data.py --symbol={} --from={} --to={} -o {}.csv".format(ticker, startdate, today, ticker))
+for ticker in tickers:
+    if len(ticker)>0:
+        os.system("python get_data.py --symbol={} --from={} --to={} -o {}.csv".format(ticker, startdate, today, ticker))
 
 os.system("python get_data.py --symbol={} --from={} --to={} -o {}.csv".format('^AEX', startdate, today, 'AEX'))
 os.system("python get_data.py --symbol={} --from={} --to={} -o {}.csv".format('^NDX', startdate, today, 'NDX'))
@@ -43,14 +42,14 @@ os.system("python get_data.py --symbol={} --from={} --to={} -o {}.csv".format('^
 
 
 def read_exchange(csv_file):
-    
-    exchange = pd.read_csv(csv_file, usecols=['Date', 'Close'] , na_values=['null', 0])                
+
+    exchange = pd.read_csv(csv_file, usecols=['Date', 'Close'] , na_values=['null', 0])
     #exchange['Exchange'] = csv_file.strip('data/').strip('.csv')
-    exchange.dropna(inplace=True) 
-    exchange['exchange_total'] = exchange.sum(axis=1)        
+    exchange.dropna(inplace=True)
+    exchange['exchange_total'] = exchange.sum(axis=1)
     exchange['last_price'] = exchange.shift(1)['exchange_total']
     exchange.sort_values('Date', inplace=True)
-    
+
     exchange['1d_hist'] =  exchange.shift(1)['exchange_total']
     exchange['1d_beurs'] =  exchange['exchange_total']/exchange['1d_hist']-1
     exchange['5d_hist'] =  exchange.shift(5)['exchange_total']
@@ -59,8 +58,8 @@ def read_exchange(csv_file):
     exchange['21d_beurs'] =  exchange['exchange_total']/exchange['21d_hist']-1
     exchange['250d_hist'] =  exchange.shift(250)['exchange_total']
     exchange['250d_beurs'] =  exchange['exchange_total']/exchange['250d_hist']-1
-    exchange = exchange[['Date', 'exchange_total', '1d_beurs', '5d_beurs', '21d_beurs', '250d_beurs']]    
-    
+    exchange = exchange[['Date', 'exchange_total', '1d_beurs', '5d_beurs', '21d_beurs', '250d_beurs']]
+
     return exchange
 
 aex_df = read_exchange('data/AEX.csv')
@@ -73,16 +72,17 @@ sp500_df = read_exchange('data/SP500TR.csv')
 
 csv_files = glob('data/'+'*.csv')
 
-stocks = pd.DataFrame(columns=['Aandeel', 'Date', 'Close']) 
+stocks = pd.DataFrame(columns=['Aandeel', 'Date', 'Close'])
 
 for csv_file in csv_files:
-        
-    aandeel = csv_file.strip('data/').strip('.csv')        
+
+    aandeel = csv_file.strip('data/').strip('.csv')
     if aandeel in tickers:
-        df = pd.read_csv(csv_file, usecols=['Date', 'Volume', 'Close'], na_values=['null', 0])        
+        print aandeel
+        df = pd.read_csv(csv_file, usecols=['Date', 'Volume', 'Close'], na_values=['null', 0])
         df['Aandeel'] = aandeel
-        df.dropna(inplace=True)           
-        df = df[['Aandeel', 'Date', 'Close']]    
+        df.dropna(inplace=True)
+        df = df[['Aandeel', 'Date', 'Close']]
         if aandeel in aex:
             df['Exchange'] = 'AEX'
         if aandeel in tickers_ndx:
@@ -90,7 +90,7 @@ for csv_file in csv_files:
         if aandeel in tickers_sp500:
             df['Exchange'] = 'SP500TR'
         stocks = pd.concat([stocks, df])
-                             
+
 stocks_aex = pd.merge(stocks[stocks.Exchange=='AEX'], aex_df, how='outer', on=['Date'])
 stocks_ndx = pd.merge(stocks[stocks.Exchange=='NDX'], ndx_df, how='outer', on=['Date'])
 stocks_sp500 = pd.merge(stocks[stocks.Exchange=='SP500TR'], sp500_df, how='outer', on=['Date'])
