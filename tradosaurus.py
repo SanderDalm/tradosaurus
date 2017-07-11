@@ -6,7 +6,8 @@ import matplotlib.pyplot as plt
 
 def get_reward(vector, action):
 
-    reward = vector[-1] - vector[0]
+    #reward = vector[-1] - vector[0]
+    reward = vector[-1]
 
     return np.multiply(action, reward)
 
@@ -48,10 +49,12 @@ def weighted_average(results, num_layers):
 
 class tradosaurus(object):
 
-    def __init__(self, num_nodes_hidden, gen_size, learning_rate, decay, num_features, mean, sd):
+    def __init__(self, num_nodes_hidden, gen_size, learning_rate, decay, num_features,
+                 mean, sd, mini_batch_size):
 
         self.mean = mean
         self.sd = sd
+        self.mini_batch_size = mini_batch_size
         self.num_features = num_features
         self.num_nodes_hidden = num_nodes_hidden
         self.gen_size = gen_size
@@ -77,11 +80,16 @@ class tradosaurus(object):
             self.weight_list = [np.zeros([self.input_size,self.output_size])]
 
 
-    def trade(self, input_vectors, weight_list):
+    def trade(self, input_vectors, weight_list, mini_batch=True):
 
         # Generate trade action for each input vector
         actions = []
         reward = 0
+        
+        if mini_batch:
+            mini_batch_indices = np.random.choice(range(len(input_vectors)), self.mini_batch_size)
+            input_vectors = input_vectors[mini_batch_indices]
+        
         for vector in input_vectors:
 
             x = vector[:self.num_features]

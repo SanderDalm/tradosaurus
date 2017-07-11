@@ -82,7 +82,7 @@ for csv_file in csv_files:
         df = pd.read_csv(csv_file, usecols=['Date', 'Volume', 'Close'], na_values=['null', 0])
         df['Aandeel'] = aandeel
         df.dropna(inplace=True)
-        df = df[['Aandeel', 'Date', 'Close']]
+        df = df[['Aandeel', 'Date', 'Close', 'Volume']]
         if aandeel in aex:
             df['Exchange'] = 'AEX'
         if aandeel in tickers_ndx:
