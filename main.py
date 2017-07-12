@@ -5,17 +5,27 @@ import pandas as pd
 import numpy as np
 from stockstats import StockDataFrame
 import matplotlib.pyplot as plt
+import tensorflow as tf
 
+from download_stock_data import download_and_save_stock_data
 from create_features import get_random_forest_features, get_nn_features
 from batch_generator import BatchGenerator
 from rnn import RNN
 
 ###############################################
+# Download and save stock data
+###############################################
+
+download_and_save_stock_data()
+
+###############################################
 # Load random forest features
 ###############################################
 
+n_future, n_history, offset = 1, 30, 10
+
 features_train, labels_train, price_history_train, features_test, labels_test, price_history_test=\
-get_random_forest_features(1, 30, 10)
+get_random_forest_features(n_future, n_history, offset)
 
 ###############################################
 # Fit random forest
@@ -97,12 +107,60 @@ plt.plot(prices_norm, color='b')
 
 train_dir = '/media/sander/samsungssd/tradosaurus/train_data/'
 test_dir = '/media/sander/samsungssd/tradosaurus/test_data/'
-batch_size = 50
 
-get_nn_features(100, 10, train_dir, test_dir)
-generator = BatchGenerator(train_dir, test_dir, batch_size)
+n_history, offset = 100, 10
+
+get_nn_features(n_history, offset, train_dir, test_dir)
 
 ###############################################
 # Train RNN
 ###############################################
 
+batch_size = 32
+n_future = 1
+generator = BatchGenerator(train_dir, test_dir, batch_size, n_future)
+
+
+summary_frequency=10
+num_nodes=256
+num_layers=3
+num_unrollings = 100-n_future
+batch_generator=generator    
+input_shape = 3
+only_retrain_output=False
+output_keep_prob = 1
+
+cell=tf.nn.rnn_cell.LSTMCell
+
+nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
+             batch_generator, input_shape, only_retrain_output, output_keep_prob,
+             cell)
+nn.train(5000)
+nn.save('models/checkpoint_1dag.ckpt')
+nn.plot_loss()
+
+# Scatter predicted vs actual price change for batch of stocks
+x_batch, y_batch = generator.next_batch('test')
+
+preds = []
+labels = []
+for i in range(batch_size):
+    x, y = x_batch[i], y_batch[i]
+    y = y.reshape([100-n_future, 1])
+    x = x.reshape([1, 3, 100-n_future])
+    preds.extend(nn.predict(x))
+    labels.extend(y)
+plt.scatter(preds, labels)    
+
+
+# Plot predicted vs actual price change for a single stocks
+x, y = generator.next_batch('test')
+x, y = x[0], y[0]
+y = y.reshape([100-n_future, 1])
+x = x.reshape([1, 3, 100-n_future])
+preds = nn.predict(x)
+
+plt.plot(x[0,0,:], color='g', alpha=.4)
+plt.plot([0]*(100-n_future), color='k', alpha=.4)
+plt.plot(y, color='r', alpha=.4)
+plt.plot(preds, color='b', alpha=.4)

@@ -25,12 +25,12 @@ class RNN(object):
 
         self.minibatch_loss_list = []
         self.loss_list = []
+        
+        self.is_training = True
 
-        # Call a basic LSTM/GRU cell from tensorflow module
-        #cell = tf.nn.rnn_cell.GRUCell(num_nodes)
-
-        #cells = [tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob = self.output_keep_prob)
-        #           for cell_ in cells]
+        #if self.is_training:
+        #    cells = [tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob = self.output_keep_prob)
+        #               for cell_ in cells]
 
         # These layers are combined into a conventient MultiRNNCell object
         multi_cell = tf.nn.rnn_cell.MultiRNNCell([cell(self.num_nodes) for _ in range(num_layers)])
@@ -87,6 +87,8 @@ class RNN(object):
 
 
     def train(self, num_steps):
+        
+        self.is_training = True
 
         with self.session.as_default():
 
@@ -170,6 +172,8 @@ class RNN(object):
 
     def predict(self, inputs):
 
+        self.is_training = False
+        
         feed_dict = dict()
         for i in range(self.num_unrollings):
                     feed_dict[self.train_data[i]] = inputs[:,:,i]                    
@@ -211,7 +215,7 @@ if __name__ == '__main__':
                  batch_generator, input_shape, only_retrain_output, output_keep_prob,
                  cell)
     nn.train(5000)
-    nn.plot_loss()
+    nn.plot()
        
     x, y = generator.next_batch('train')
     x, y = x[0], y[0]
