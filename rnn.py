@@ -8,13 +8,14 @@ from matplotlib import pyplot as plt
 
 class RNN(object):
 
-    def __init__(self, summary_frequency, num_nodes, num_layers, num_unrollings,
-                 batch_generator, input_shape=3, only_retrain_output=False, output_keep_prob=1):
-
+    def __init__(self, summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
+                 batch_generator, input_shape=3, only_retrain_output=False, output_keep_prob=1,
+                 cell=tf.nn.rnn_cell.LSTMCell):
         
         self.batch_generator = batch_generator        
         self.batch_size = self.batch_generator.batch_size
         self.num_unrollings = num_unrollings
+        self.n_future = n_future
         self.num_nodes = num_nodes        
         self.summary_frequency = summary_frequency
         self.input_shape = input_shape
@@ -26,20 +27,13 @@ class RNN(object):
         self.loss_list = []
 
         # Call a basic LSTM/GRU cell from tensorflow module
-        cell = tf.nn.rnn_cell.GRUCell(num_nodes)
+        #cell = tf.nn.rnn_cell.GRUCell(num_nodes)
 
-        cells = [cell]
-
-        # Here we add as many layers as desired
-        for i in range(num_layers-1):
-          higher_layer_cell = tf.nn.rnn_cell.GRUCell(self.num_nodes)
-          cells.append(higher_layer_cell)
-
-        cells = [tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob = self.output_keep_prob)
-                   for cell_ in cells]
+        #cells = [tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob = self.output_keep_prob)
+        #           for cell_ in cells]
 
         # These layers are combined into a conventient MultiRNNCell object
-        multi_cell = tf.nn.rnn_cell.MultiRNNCell(cells)
+        multi_cell = tf.nn.rnn_cell.MultiRNNCell([cell(self.num_nodes) for _ in range(num_layers)])
 
         # Read input data        
         self.train_data = list()
@@ -181,15 +175,11 @@ class RNN(object):
                     feed_dict[self.train_data[i]] = inputs[:,:,i]                    
         predictions, = self.session.run(
                 [self.sample_prediction], feed_dict=feed_dict)
-
-        
-        plt.plot(inputs[:,0,1:].reshape([98,1]), color='g', alpha=.4)
-        plt.plot(predictions, color='b', alpha=.4)
-        
+                
         return predictions
 
 
-    def plot(self):
+    def plot_loss(self):
 
         x1=np.array(self.loss_list)
         plt.plot(x1,color='g',alpha=0.4, linewidth=5)
@@ -202,23 +192,44 @@ if __name__ == '__main__':
     from batch_generator import BatchGenerator
     train_dir = '/media/sander/samsungssd/tradosaurus/train_data/'
     test_dir = '/media/sander/samsungssd/tradosaurus/test_data/'
-    batch_size = 1
-    generator = BatchGenerator(train_dir, test_dir, batch_size)
+    batch_size = 32
+    n_future = 1
+    generator = BatchGenerator(train_dir, test_dir, batch_size, n_future)
 
     
     summary_frequency=10
-    num_nodes=32
-    num_layers=1
-    num_unrollings = 99
+    num_nodes=16
+    num_layers=3
+    num_unrollings = 100-n_future
     batch_generator=generator    
     input_shape = 3
     only_retrain_output=False
     output_keep_prob = 1
+    cell=tf.nn.rnn_cell.LSTMCell
     
-    nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings,
-                 batch_generator, input_shape, only_retrain_output, output_keep_prob)
-    nn.train(1500)
-    nn.plot()
+    nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
+                 batch_generator, input_shape, only_retrain_output, output_keep_prob,
+                 cell)
+    nn.train(5000)
+    nn.plot_loss()
+       
+    x, y = generator.next_batch('train')
+    x, y = x[0], y[0]
+    y = y.reshape([100-n_future, 1])
+    x = x.reshape([1, 3, 100-n_future])
     
-    x, y = generator.next_batch('test')
+    plt.plot(x[0,0,:])
+    plt.plot(y)
+    
     pred = nn.predict(x)
+    
+    #pred_plot = np.concatenate([np.zeros(n_future).reshape([n_future,1]), predictions])
+    
+    plt.scatter(pred, y)
+    
+    plt.plot(x[0,0,:], color='g', alpha=.4)
+    plt.plot(y, color='r', alpha=.4)
+    plt.plot(pred, color='b', alpha=.4)
+        
+        
+    
