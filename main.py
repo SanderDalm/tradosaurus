@@ -134,7 +134,7 @@ nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
              batch_generator, input_shape, only_retrain_output, output_keep_prob,
              cell)
 nn.load('models/checkpoint_1dag.ckpt')
-nn.train(5000)
+nn.train(1000)
 #nn.save('models/checkpoint_1dag.ckpt')
 nn.plot_loss()
 
@@ -151,6 +151,12 @@ for i in range(batch_size):
     labels.extend(y)
 plt.scatter(preds, labels, alpha=.4)    
 plt.legend(['Predicted vs actual stock price change'])
+
+from scipy.stats import pearsonr
+preds = np.array(preds).reshape([len(preds)])
+labels = np.array(labels).reshape([len(labels)])
+
+pearsonr(preds, labels)
 
 # Plot predicted vs actual price change for a single stocks
 x_batch, y_batch = generator.next_batch('test')
