@@ -16,17 +16,13 @@ stocks = pd.read_csv('data/stocks.csv',
 
 stocks.dropna(inplace=True)
 
+stocks.sort_values('Date', inplace=True)
+
 stocks = StockDataFrame.retype(stocks)
 
-stock_list = np.array(stocks.aandeel.unique().tolist())
-
-np.random.shuffle(stock_list)
-train_stocks = stock_list[:446]
-test_stocks = stock_list[446:]
-
-stocks_train = stocks[stocks.aandeel.isin(train_stocks)]
-stocks_test = stocks[stocks.aandeel.isin(test_stocks)]
-
+stocks['date'] = stocks.index
+stocks_train = stocks[stocks['date'] < '2016-01-01']
+stocks_test = stocks[stocks['date'] >= '2016-01-01']
 stocks_train['date'] = stocks_train.index
 stocks_test['date'] = stocks_test.index
 
@@ -127,8 +123,8 @@ def get_random_forest_features(n_future, n_hist, offset):
                 features.append([macd, macd_diff, price_diff, volume_diff,
                                  rsi, ema_ratio, ema12_diff, ema26_diff,
                                  downtrend26, lowest26, downtrend7, lowest7,
-                                 uptrend26, highest26, uptrend7, highest7])#,
-                                 #beurs1d, beurs5d, beurs21d])
+                                 uptrend26, highest26, uptrend7, highest7,
+                                 beurs1d, beurs5d, beurs21d])
     
                 # Calculate price change
                 label = price_list[cursor+n_future]/price_list[cursor]-1

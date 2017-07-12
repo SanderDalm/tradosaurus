@@ -25,6 +25,7 @@ class RNN(object):
 
         self.minibatch_loss_list = []
         self.loss_list = []
+        self.val_loss_list = []
         
         self.is_training = True
 
@@ -52,16 +53,14 @@ class RNN(object):
         self.b = tf.Variable(tf.zeros([1]), name='output_b')
                 
         logits = tf.matmul(tf.concat(axis=0,values=outputs), self.w) + self.b        
+        logits = tf.reshape(logits, [self.num_unrollings, self.batch_size, 1])
+
         self.sample_prediction = logits        
 
         self.train_labels = list()
-        
-        logits = tf.reshape(logits, [self.num_unrollings, self.batch_size, 1])
-        
         for i in range(self.num_unrollings):
             self.train_labels.append(tf.placeholder(tf.float32, [None, 1]))
-                   
-        
+                           
         self.loss = tf.losses.mean_squared_error(self.train_labels, logits)
        
         # Optimizer.
@@ -78,12 +77,6 @@ class RNN(object):
             init_op = tf.global_variables_initializer()
             self.session.run(init_op)
                 
-
-    def logprob(self, predictions, labels):
-
-        """Log-probability of the true labels in a predicted batch."""
-        predictions[predictions < 1e-10] = 1e-10
-        return np.sum(np.multiply(labels, -np.log(predictions))) / labels.shape[0]
 
 
     def train(self, num_steps):
@@ -116,10 +109,12 @@ class RNN(object):
                     if step > 0:
                         mean_loss = mean_loss / self.summary_frequency
                         self.loss_list.append(mean_loss)
+                        val_loss = self.get_val_loss()
+                        self.val_loss_list.append(val_loss)
 
-                    # The mean loss is an estimate of the loss over the last few batches.
-                    print(
-                       'Average loss at step %d: %f ' % (step, mean_loss))
+                        # The mean loss is an estimate of the loss over the last few batches.
+                        print('Average train loss at step %d: %f ' % (step, mean_loss))
+                        print('Average val loss at step %d: %f ' % (step, val_loss))
 
                     mean_loss=0
 
@@ -183,12 +178,33 @@ class RNN(object):
         return predictions
 
 
+    def get_val_loss(self):
+        
+        x_val, y_val = self.batch_generator.next_batch('test')
+        
+        feed_dict = dict()
+        labels = list()
+        
+        for i in range(self.num_unrollings):
+                    feed_dict[self.train_data[i]] = x_val[:,:,i]  
+                    labels.append(y_val[:,:,i])
+                                        
+        pred, = self.session.run(
+                [self.sample_prediction], feed_dict=feed_dict)
+        
+        labels = np.array(labels)
+        
+        return np.mean(np.square(labels-pred))
+         
+
     def plot_loss(self):
 
         x1=np.array(self.loss_list)
+        x2=np.array(self.val_loss_list)
         plt.plot(x1,color='g',alpha=0.4, linewidth=5)
+        plt.plot(x2,color='r',alpha=0.4, linewidth=5)
         plt.xlabel('Iterations')
-        plt.ylabel('Loss')
+        plt.legend(['train_loss', 'val_loss'])
         plt.show()
 
 if __name__ == '__main__':

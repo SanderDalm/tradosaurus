@@ -6,6 +6,7 @@ import numpy as np
 from stockstats import StockDataFrame
 import matplotlib.pyplot as plt
 import tensorflow as tf
+from sklearn.ensemble import RandomForestRegressor
 
 from download_stock_data import download_and_save_stock_data
 from create_features import get_random_forest_features, get_nn_features
@@ -16,7 +17,7 @@ from rnn import RNN
 # Download and save stock data
 ###############################################
 
-download_and_save_stock_data()
+#download_and_save_stock_data()
 
 ###############################################
 # Load random forest features
@@ -31,14 +32,12 @@ get_random_forest_features(n_future, n_history, offset)
 # Fit random forest
 ###############################################
 
-from sklearn.ensemble import RandomForestRegressor
-
 model = RandomForestRegressor()
 model.fit(features_train, labels_train)
 model.score(features_train, labels_train)
 model.score(features_test, labels_test)
-plt.scatter(model.predict(features_train), labels_train)
-plt.scatter(model.predict(features_test), labels_test)
+plt.scatter(model.predict(features_train), labels_train, alpha=.4)
+plt.scatter(model.predict(features_test), labels_test, alpha=.4)
 importance=model.feature_importances_ 
 
 
@@ -50,10 +49,9 @@ temp_df.columns = col_list
 
 temp_df['pred'] = model.predict(features_test)
 
-preds_good=np.where(temp_df['pred']>.3)[0]
-preds_bad=np.where(temp_df['pred']<-.3)[0]
-preds_norm = np.where(abs(temp_df['pred'])<.3)[0]
-
+preds_good=np.where(temp_df['pred']>.2)[0]
+preds_bad=np.where(temp_df['pred']<-.2)[0]
+preds_norm = np.where(abs(temp_df['pred'])<.2)[0]
 
 prices_good = np.mean(price_history_test[preds_good], axis=0)
 prices_bad = np.mean(price_history_test[preds_bad], axis=0)
@@ -63,9 +61,9 @@ plt.plot(prices_good, color='g')
 plt.plot(prices_bad, color='r')
 plt.plot(prices_norm, color='b')
 
-temp_df[temp_df['pred']>.3]['profit'].describe()
-temp_df[temp_df['pred']<-.3]['profit'].describe()
-temp_df[abs(temp_df['pred'])<.3]['profit'].describe()
+temp_df[temp_df['pred']>.2]['profit'].describe()
+temp_df[temp_df['pred']<-.2]['profit'].describe()
+temp_df[abs(temp_df['pred'])<.2]['profit'].describe()
 
 
 ###############################################
@@ -121,7 +119,7 @@ n_future = 1
 generator = BatchGenerator(train_dir, test_dir, batch_size, n_future)
 
 
-summary_frequency=10
+summary_frequency=100
 num_nodes=256
 num_layers=3
 num_unrollings = 100-n_future
@@ -135,8 +133,9 @@ cell=tf.nn.rnn_cell.LSTMCell
 nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
              batch_generator, input_shape, only_retrain_output, output_keep_prob,
              cell)
+#nn.load('models/checkpoint_1dag.ckpt')
 nn.train(5000)
-nn.save('models/checkpoint_1dag.ckpt')
+#nn.save('models/checkpoint_1dag.ckpt')
 nn.plot_loss()
 
 # Scatter predicted vs actual price change for batch of stocks
@@ -150,17 +149,19 @@ for i in range(batch_size):
     x = x.reshape([1, 3, 100-n_future])
     preds.extend(nn.predict(x))
     labels.extend(y)
-plt.scatter(preds, labels)    
-
+plt.scatter(preds, labels, alpha=.4)    
+plt.legend(['Predicted vs actual stock price change'])
 
 # Plot predicted vs actual price change for a single stocks
-x, y = generator.next_batch('test')
-x, y = x[0], y[0]
+x_batch, y_batch = generator.next_batch('test')
+x, y = x_batch[0], y_batch[0]
 y = y.reshape([100-n_future, 1])
 x = x.reshape([1, 3, 100-n_future])
 preds = nn.predict(x)
 
+plt.clf()
 plt.plot(x[0,0,:], color='g', alpha=.4)
 plt.plot([0]*(100-n_future), color='k', alpha=.4)
 plt.plot(y, color='r', alpha=.4)
 plt.plot(preds, color='b', alpha=.4)
+plt.legend(['Stock value', 'Zero-line', 'Actual price change', 'Predicted price change'])
