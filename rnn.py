@@ -53,7 +53,7 @@ class RNN(object):
         self.b = tf.Variable(tf.zeros([1]), name='output_b')
                 
         logits = tf.matmul(tf.concat(axis=0,values=outputs), self.w) + self.b        
-        logits = tf.reshape(logits, [self.num_unrollings, self.batch_size, 1])
+        logits = tf.reshape(logits, [self.num_unrollings, -1, 1])
 
         self.sample_prediction = logits        
 

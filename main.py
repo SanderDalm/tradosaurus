@@ -133,7 +133,7 @@ cell=tf.nn.rnn_cell.LSTMCell
 nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
              batch_generator, input_shape, only_retrain_output, output_keep_prob,
              cell)
-#nn.load('models/checkpoint_1dag.ckpt')
+nn.load('models/checkpoint_1dag.ckpt')
 nn.train(5000)
 #nn.save('models/checkpoint_1dag.ckpt')
 nn.plot_loss()
@@ -157,9 +157,9 @@ x_batch, y_batch = generator.next_batch('test')
 x, y = x_batch[0], y_batch[0]
 y = y.reshape([100-n_future, 1])
 x = x.reshape([1, 3, 100-n_future])
-preds = nn.predict(x)
+preds = nn.predict(x)[:,0]
 
-plt.clf()
+
 plt.plot(x[0,0,:], color='g', alpha=.4)
 plt.plot([0]*(100-n_future), color='k', alpha=.4)
 plt.plot(y, color='r', alpha=.4)
