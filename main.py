@@ -17,7 +17,7 @@ from rnn import RNN
 # Download and save stock data
 ###############################################
 
-#download_and_save_stock_data()
+download_and_save_stock_data()
 
 ###############################################
 # Load random forest features
@@ -38,7 +38,7 @@ model.score(features_train, labels_train)
 model.score(features_test, labels_test)
 plt.scatter(model.predict(features_train), labels_train, alpha=.4)
 plt.scatter(model.predict(features_test), labels_test, alpha=.4)
-importance=model.feature_importances_ 
+importance=model.feature_importances_
 
 
 temp = np.concatenate([features_test, labels_test.reshape([len(labels_test),1])], axis=1)
@@ -85,7 +85,7 @@ actions, reward = saurus.trade(features_test_tradosaurus, weights, mini_batch=Fa
 actions = np.array(actions)
 
 plt.scatter(actions, labels_test)
-    
+
 good_preds=np.where(actions>.01)[0]
 bad_preds=np.where(actions<.0)[0]
 norm_preds = np.where(abs(actions-1)<.002)[0]
@@ -123,7 +123,7 @@ summary_frequency=100
 num_nodes=256
 num_layers=3
 num_unrollings = 100-n_future
-batch_generator=generator    
+batch_generator=generator
 input_shape = 3
 only_retrain_output=False
 output_keep_prob = 1
@@ -149,7 +149,7 @@ for i in range(batch_size):
     x = x.reshape([1, 3, 100-n_future])
     preds.extend(nn.predict(x))
     labels.extend(y)
-plt.scatter(preds, labels, alpha=.4)    
+plt.scatter(preds, labels, alpha=.4)
 plt.legend(['Predicted vs actual stock price change'])
 
 # Determine correlation
@@ -200,4 +200,33 @@ plt.plot(y, color='r', alpha=.4)
 plt.plot(preds, color='b', alpha=.4)
 plt.legend(['Stock value', 'Zero-line', 'Actual price change', 'Predicted price change'])
 
+############################################################
+# Prediction pipeline
+############################################################
+
+# Get last 99 days for each stock as list from stocks.csv
+stocks = pd.read_csv('data/stocks.csv')
+
+preds = []
+aandelen = []
+
+for aandeel in stocks.aandeel.unique().tolist():
+    temp_stocks = stocks[stocks.aandeel==aandeel]
+    temp_stocks.sort_values('date', inplace=True)
+    temp_stocks = temp_stocks[-99:]
+    x = np.array(temp_stocks[['close', 'volume', 'exchange_total']]).reshape([1, 3, 100-n_future])
+    pred = nn.predict(x)
+    preds.append(pred)
+    aandelen.append(aandeel)
+preds_zipped = zip(aandelen, preds)
+preds_zipped.sort(key = lambda t: t[1])
+
+
+
+
+
+
+
+# Predict
+# Sort
 
