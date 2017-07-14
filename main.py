@@ -134,7 +134,7 @@ nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
              batch_generator, input_shape, only_retrain_output, output_keep_prob,
              cell)
 nn.load('models/checkpoint_1dag.ckpt')
-nn.train(1000)
+#nn.train(10000)
 #nn.save('models/checkpoint_1dag.ckpt')
 nn.plot_loss()
 
@@ -152,11 +152,39 @@ for i in range(batch_size):
 plt.scatter(preds, labels, alpha=.4)    
 plt.legend(['Predicted vs actual stock price change'])
 
+# Determine correlation
 from scipy.stats import pearsonr
 preds = np.array(preds).reshape([len(preds)])
 labels = np.array(labels).reshape([len(labels)])
-
 pearsonr(preds, labels)
+
+# Determine mean difference beteween high low and normal cats
+np.mean(labels[np.where(preds>.3)])
+np.mean(labels[np.where(preds<-.3)])
+np.mean(labels[np.where(abs(preds)<.3)])
+
+# Determine acc
+score=np.zeros(len(labels))
+score[preds>0]+=.5
+score[labels>0]+=.5
+acc = len(score[score!=.5])/float(len(score))
+acc
+
+# Plot patterns for high and low preds
+x_batch, y_batch = generator.next_batch('test')
+preds = nn.predict(x_batch).reshape([10000,99])[:,-1]
+preds_good = x_batch[:,0,:][np.where(preds>.3)]
+preds_bad = x_batch[:,0,:][np.where(preds<-.3)]
+preds_norm = x_batch[:,0,:][np.where(abs(preds)<.3)]
+
+prices_good = np.mean(preds_good, axis=0)
+prices_bad = np.mean(preds_bad, axis=0)
+prices_norm = np.mean(preds_norm, axis=0)
+
+plt.plot(prices_good, color='g')
+plt.plot(prices_bad, color='r')
+plt.plot(prices_norm, color='b')
+
 
 # Plot predicted vs actual price change for a single stocks
 x_batch, y_batch = generator.next_batch('test')
@@ -171,3 +199,5 @@ plt.plot([0]*(100-n_future), color='k', alpha=.4)
 plt.plot(y, color='r', alpha=.4)
 plt.plot(preds, color='b', alpha=.4)
 plt.legend(['Stock value', 'Zero-line', 'Actual price change', 'Predicted price change'])
+
+

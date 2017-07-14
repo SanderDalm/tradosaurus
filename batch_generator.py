@@ -7,6 +7,7 @@ from six.moves import range
 import numpy as np
 import tensorflow as tf
 
+
 class BatchGenerator(object):
 
     def __init__(self, train_dir, test_dir, batch_size, n_future):
@@ -28,10 +29,12 @@ class BatchGenerator(object):
                 randint = np.random.randint(0,len(self.train_data_list)-1)
                 x = np.load(self.train_data_list[randint])[:,:-self.n_future]   
                 y = np.load(self.train_data_list[randint])[0][self.n_future:]
+                                
                 
                 y = y.reshape([1, 100-self.n_future])                
-                x_price = x[0,:].reshape([1, 100-self.n_future])                
+                x_price = x[0,:].reshape([1, 100-self.n_future])                                
                 y=y-x_price
+                                
                 
             if train_test == 'test':
                 randint = np.random.randint(0,len(self.test_data_list)-1)
@@ -39,8 +42,9 @@ class BatchGenerator(object):
                 y = np.load(self.test_data_list[randint])[0][self.n_future:]
                 
                 y = y.reshape([1, 100-self.n_future])                
-                x_price = x[0,:].reshape([1, 100-self.n_future])
+                x_price = x[0,:].reshape([1, 100-self.n_future])                
                 y=y-x_price
+                                
                 
             x_batch.append(x)
             y_batch.append(y)
@@ -50,5 +54,5 @@ class BatchGenerator(object):
 if __name__ == '__main__':
     generator=BatchGenerator('/media/sander/samsungssd/tradosaurus/train_data/',
                              '/media/sander/samsungssd/tradosaurus/test_data/',
-                             50, 5)
-    
+                             50, 1)
+    x,y=generator.next_batch('train')
