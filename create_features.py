@@ -20,6 +20,18 @@ stocks.sort_values('Date', inplace=True)
 
 stocks = StockDataFrame.retype(stocks)
 
+stock_list = np.array(stocks.aandeel.unique().tolist())
+
+#np.random.shuffle(stock_list)
+#train_stocks = stock_list[:446]
+#test_stocks = stock_list[446:]
+#
+#stocks_train = stocks[stocks.aandeel.isin(train_stocks)]
+#stocks_test = stocks[stocks.aandeel.isin(test_stocks)]
+#
+#stocks_train['date'] = stocks_train.index
+#stocks_test['date'] = stocks_test.index
+
 stocks['date'] = stocks.index
 stocks_train = stocks[stocks['date'] < '2016-01-01']
 stocks_test = stocks[stocks['date'] >= '2016-01-01']
@@ -31,6 +43,10 @@ def standardize(array):
     mean = np.mean(array)
     std = np.std(array)    
     return (array-mean)/std
+
+def indexize(array):    
+    array = (array/array[0])
+    return array*100-100
 
 ###############################################
 # Create features for filtering
@@ -140,11 +156,11 @@ def get_random_forest_features(n_future, n_hist, offset):
     
     features_train = np.array([standardize(x) for x in features_train[:,]])
     labels_train = standardize(labels_train)
-    price_history_train = np.array([standardize(x) for x in price_history_train[:,]])
+    #price_history_train = np.array([standardize(x) for x in price_history_train[:,]])
     
     features_test = np.array([standardize(x) for x in features_test[:,]])
     labels_test = standardize(labels_test)
-    price_history_test = np.array([standardize(x) for x in price_history_test[:,]])
+    #price_history_test = np.array([standardize(x) for x in price_history_test[:,]])
     
     features_train = features_train[np.where(abs(labels_train)<3)[0]]
     price_history_train = price_history_train[np.where(abs(labels_train)<3)[0]]
@@ -163,9 +179,9 @@ def get_random_forest_features(n_future, n_hist, offset):
 # Create features for NN
 ###############################################
 
-def get_nn_features(n_hist, offset, train_dir, test_dir):
+def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
     
-    def create_nn_features(df, n_hist, offset, outdir):
+    def create_nn_features(df, n_hist, n_future, offset, outdir):
     
         df.sort_values(['aandeel', 'date'])
     
@@ -181,14 +197,25 @@ def get_nn_features(n_hist, offset, train_dir, test_dir):
     
             while cursor < len(price_list)-n_hist:
     
-                price_history = standardize(price_list[cursor:cursor+n_hist])
-                volume_history = standardize(volume_list[cursor:cursor+n_hist])
-                exchange_history = standardize(exchange_list[cursor:cursor+n_hist])
+                price_history = np.array(indexize(price_list[cursor:cursor+n_hist]))
+                volume_history = np.array(indexize(volume_list[cursor:cursor+n_hist]))
+                exchange_history = np.array(indexize(exchange_list[cursor:cursor+n_hist]))
                 
-                features = np.array([price_history, volume_history, exchange_history])
+                x = np.concatenate([price_history, volume_history, exchange_history], axis=0).reshape([3, n_hist])
+                
+                x_next = x[:,n_future:]                
+                x_diff = x_next-x[:,:-n_future]
+                y = x_diff[:,n_future:]
+                x_diff = x_diff[:,:-n_future]                
+                y = y[0,:].reshape([1, n_hist-n_future*2])
+                
+                
+                features = np.concatenate([x_diff, y], axis=0)
+                
                 np.save(outdir+aandeel+str(cursor), features)
+                np.save(outdir+aandeel+str(cursor)+'_price_history', price_history)
                 cursor += offset
         
 
-    create_nn_features(stocks_train, n_hist, offset, train_dir)    
-    create_nn_features(stocks_test, n_hist, offset, test_dir)
+    create_nn_features(stocks_train, n_hist, n_future, offset, train_dir)    
+    create_nn_features(stocks_test, n_hist, n_future, offset, test_dir)

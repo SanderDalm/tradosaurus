@@ -28,13 +28,15 @@ class RNN(object):
         self.val_loss_list = []
         
         self.is_training = True
+        cells = [cell(self.num_nodes) for _ in range(num_layers)]
+        
+        if self.is_training:
+            cells = [tf.nn.rnn_cell.DropoutWrapper(cell_, output_keep_prob = self.output_keep_prob)
+                      for cell_ in cells]
 
-        #if self.is_training:
-        #    cells = [tf.contrib.rnn.DropoutWrapper(cell, output_keep_prob = self.output_keep_prob)
-        #               for cell_ in cells]
-
+        
         # These layers are combined into a conventient MultiRNNCell object
-        multi_cell = tf.nn.rnn_cell.MultiRNNCell([cell(self.num_nodes) for _ in range(num_layers)])
+        multi_cell = tf.nn.rnn_cell.MultiRNNCell(cells)
 
         # Read input data        
         self.train_data = list()
@@ -46,7 +48,7 @@ class RNN(object):
         # Feed the data to the RNN model
         outputs = tf.Variable(np.zeros([self.num_unrollings, self.batch_size, 1]))
         outputs, self.state = tf.nn.static_rnn(multi_cell, self.train_data, dtype=tf.float32)
-        
+                
         # Classifier. For training, we remove the last output, as it has no label.
         # The last output is only used for prediction purposes during sampling.
         self.w = tf.Variable(tf.truncated_normal([self.num_nodes, 1], -0.1, 0.1), name='output_w')
@@ -62,6 +64,9 @@ class RNN(object):
             self.train_labels.append(tf.placeholder(tf.float32, [None, 1]))
                            
         self.loss = tf.losses.mean_squared_error(self.train_labels, logits)
+        #self.loss =  self.loss = tf.reduce_mean(
+        #  tf.nn.softmax_cross_entropy_with_logits(
+        #    logits=logits, labels=self.train_labels))
        
         # Optimizer.
         if self.only_retrain_output:
@@ -113,7 +118,7 @@ class RNN(object):
                         self.val_loss_list.append(val_loss)
 
                         # The mean loss is an estimate of the loss over the last few batches.
-                        print('Average train loss at step %d: %f ' % (step, mean_loss))
+                        print('       Average train loss at step %d: %f ' % (step, mean_loss))
                         print('Average val loss at step %d: %f ' % (step, val_loss))
 
                     mean_loss=0

@@ -1,23 +1,26 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
+import os
 
 from glob import glob
 from six.moves import range
 
 import numpy as np
-import tensorflow as tf
 
 
 class BatchGenerator(object):
 
-    def __init__(self, train_dir, test_dir, batch_size, n_future):
+    def __init__(self, train_dir, test_dir, batch_size, n_history, n_future):
 
 
-        self.train_data_list = glob(train_dir+'/*.npy')
+        self.train_data_list = glob(train_dir+'/*.npy')        
         self.test_data_list = glob(test_dir+'/*.npy')
+        self.train_data_list = [x for x in self.train_data_list if x.find('hist')==-1]
+        self.test_data_list = [x  for x in self.test_data_list if x.find('hist')==-1]
         self.batch_size = batch_size
+        self.n_history = n_history
         self.n_future = n_future
-
+        
     def next_batch(self, train_test):
 
         x_batch = []
@@ -26,33 +29,34 @@ class BatchGenerator(object):
         for _ in range(self.batch_size):
             
             if train_test == 'train':                
-                randint = np.random.randint(0,len(self.train_data_list)-1)
-                x = np.load(self.train_data_list[randint])[:,:-self.n_future]   
-                y = np.load(self.train_data_list[randint])[0][self.n_future:]
-                                
+                randint = np.random.randint(0,len(self.train_data_list)-1)                
                 
-                y = y.reshape([1, 100-self.n_future])                
-                x_price = x[0,:].reshape([1, 100-self.n_future])                                
-                y=y-x_price
-                                
+                x = np.load(self.train_data_list[randint])                   
+                
+                x_batch.append(x[:3])
+                y_batch.append(x[3])                
+                
+                    
                 
             if train_test == 'test':
-                randint = np.random.randint(0,len(self.test_data_list)-1)
-                x = np.load(self.test_data_list[randint])[:,:-self.n_future]
-                y = np.load(self.test_data_list[randint])[0][self.n_future:]
+                randint = np.random.randint(0,len(self.train_data_list)-1)                
                 
-                y = y.reshape([1, 100-self.n_future])                
-                x_price = x[0,:].reshape([1, 100-self.n_future])                
-                y=y-x_price
-                                
+                x = np.load(self.train_data_list[randint])                   
                 
-            x_batch.append(x)
-            y_batch.append(y)
-            
-        return np.array(x_batch).reshape([self.batch_size, 3, 100-self.n_future]), np.array(y_batch)
+                x_batch.append(x[:3,:])
+                y_batch.append(x[3,:])                
+                      
+        return np.array(x_batch).reshape([self.batch_size, 3, -1]),np.array(y_batch).reshape([self.batch_size, 1, -1])
+    
+                
     
 if __name__ == '__main__':
     generator=BatchGenerator('/media/sander/samsungssd/tradosaurus/train_data/',
                              '/media/sander/samsungssd/tradosaurus/test_data/',
-                             50, 1)
+                             50, 100, 1)
     x,y=generator.next_batch('train')
+    
+    
+    import matplotlib.pyplot as plt
+    plt.plot(x[0,0,:])
+    
