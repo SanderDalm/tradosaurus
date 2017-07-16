@@ -208,10 +208,9 @@ def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
                 y = x_diff[:,n_future:]
                 x_diff = x_diff[:,:-n_future]                
                 y = y[0,:].reshape([1, n_hist-n_future*2])
-                
-                
+                                
                 features = np.concatenate([x_diff, y], axis=0)
-                
+                                
                 np.save(outdir+aandeel+str(cursor), features)
                 np.save(outdir+aandeel+str(cursor)+'_price_history', price_history)
                 cursor += offset

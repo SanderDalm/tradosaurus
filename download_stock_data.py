@@ -48,7 +48,7 @@ def download_and_save_stock_data():
         exchange = pd.read_csv(csv_file, usecols=['Date', 'Close'] , na_values=['null', 0])
         #exchange['Exchange'] = csv_file.strip('data/').strip('.csv')
         exchange.dropna(inplace=True)
-        exchange['exchange_total'] = exchange.sum(axis=1)
+        exchange['exchange_total'] = exchange.sum(axis=1)        
         exchange['last_price'] = exchange.shift(1)['exchange_total']
         exchange.sort_values('Date', inplace=True)
 

@@ -146,14 +146,14 @@ cell=tf.nn.rnn_cell.GRUCell
 nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
              batch_generator, input_shape, only_retrain_output, output_keep_prob,
              cell)
-#nn.load('models/checkpoint_1dag.ckpt') 
+nn.load('models/checkpoint_1dag.ckpt') 
 nn.train(10000)
-nn.save('models/checkpoint_1dag.ckpt')
-nn.save('models/checkpoint_5dagen.ckpt')
+#nn.save('models/checkpoint_1dag.ckpt')
+#nn.save('models/checkpoint_5dagen.ckpt')
 nn.plot_loss()
 
 # Scatter predicted vs actual price change for batch of stocks
-generator = BatchGenerator(train_dir, test_dir, 1000, n_history, n_future)
+generator = BatchGenerator(train_dir, test_dir, 100, n_history, n_future)
 x_batch, y_batch = generator.next_batch('test')
 
 preds = []
@@ -176,9 +176,9 @@ labels = np.array(labels).reshape([len(labels)])
 pearsonr(preds, labels)
 
 # Determine mean difference beteween high low and normal cats
-np.mean(labels[np.where(preds>1)])
-np.mean(labels[np.where(preds<-1)])
-np.mean(labels[np.where(abs(preds)<1)])
+np.mean(labels[np.where(preds>4)])
+np.mean(labels[np.where(preds<-4)])
+np.mean(labels[np.where(abs(preds)<4)])
 
 # Determine acc
 score=np.zeros(len(labels))
@@ -186,22 +186,6 @@ score[preds>0]+=.5
 score[labels>0]+=.5
 acc = len(score[score!=.5])/float(len(score))
 acc
-
-# Plot patterns for high and low preds
-generator = BatchGenerator(train_dir, test_dir, 10000, n_history, n_future)
-x_batch, y_batch = generator.next_batch('test')
-preds = nn.predict(x_batch).reshape([10000,n_history-n_future*2])[:,-1]
-preds_good = x_batch[:,0,:][np.where(preds>.3)]
-preds_bad = x_batch[:,0,:][np.where(preds<-.3)]
-preds_norm = x_batch[:,0,:][np.where(abs(preds)<.3)]
-
-prices_good = np.mean(preds_good, axis=0)
-prices_bad = np.mean(preds_bad, axis=0)
-prices_norm = np.mean(preds_norm, axis=0)
-
-plt.plot(prices_good, color='g')
-plt.plot(prices_bad, color='r')
-plt.plot(prices_norm, color='b')
 
 
 # Plot predicted vs actual price change for a single stocks
@@ -212,19 +196,24 @@ x = x.reshape([1, 3, n_history-n_future*2])
 preds = nn.predict(x)[:,0]
 
 
-plt.plot(x[0,0,:], color='g', alpha=.4)
+#plt.plot(x[0,0,:], color='g', alpha=.4)
 plt.plot([0]*(n_history-n_future), color='k', alpha=.4)
 plt.plot(y, color='r', alpha=.4)
 plt.plot(preds, color='b', alpha=.4)
-plt.legend(['Stock value', 'Zero-line', 'Actual price change', 'Predicted price change'])
+plt.legend(['Zero-line', 'Actual price change', 'Predicted price change'])
 
 ############################################################
 # Prediction pipeline
 ############################################################
 
-# Get last 99 days for each stock as list from stocks.csv
+def indexize(array):    
+    array = (array/array[0])
+    return array*100-100
+
+# Get last n_history days for each stock as list from stocks.csv
 stocks = pd.read_csv('data/stocks.csv')
 
+features = []
 preds = []
 aandelen = []
 price_hist_list = []
@@ -232,37 +221,55 @@ price_hist_list = []
 for aandeel in tqdm(stocks.Aandeel.unique().tolist()):
     temp_stocks = stocks[stocks.Aandeel==aandeel]
     temp_stocks.sort_values('Date', inplace=True)
-    temp_stocks = temp_stocks[-99:]
-    if len(temp_stocks) == 99:
-        x = np.array(temp_stocks[['Close', 'Volume', 'exchange_total']]).T.reshape([1,3,n_history-n_future])
-        pred = nn.predict(x).squeeze()[-1]
-        preds.append(pred)
+    temp_stocks = temp_stocks[-n_history:]
+    if len(temp_stocks) == n_history:
+                        
+        price_history_normal = np.array(temp_stocks.Close)
+        price_history = indexize(np.array(temp_stocks.Close))
+        volume_history = indexize(np.array(temp_stocks.Volume))
+        exchange_history = indexize(np.array(temp_stocks.exchange_total))
+        
+        x = np.concatenate([price_history, volume_history, exchange_history], axis=0).reshape([3, n_history])
+        
+        x_next = x[:,n_future:]                
+        
+        x_diff = x_next-x[:,:-n_future]
+                                       
+        x_diff = x_diff.reshape([1, 3, n_history-n_future])
+        
+        pred = nn.predict(x_diff).squeeze()
+        
+        preds.append(pred[-1])
         aandelen.append(aandeel)
-        price_hist_list.append(x[:,0,:]) # probeer met beursen/volume
+        price_hist_list.append(price_history_normal) # probeer met beursen/volume
+        features.append(x)
     else:
         continue
     
 preds = np.array(preds)
+features = np.array(features)
 price_hist_list = np.array(price_hist_list).squeeze()
 
 len(np.where(preds>.5)[0])
-len(np.where(preds<-.5)[0])
+len(np.where(preds<-.8)[0])
 
 prices_good = np.mean(price_hist_list[np.where(preds>.5)[0]], axis=0)
-prices_bad = np.mean(price_hist_list[np.where(preds<-.5)[0]], axis=0)
-
-    
-def standardize(array):    
-    mean = np.mean(array)
-    std = np.std(array)    
-    return (array-mean)/std
-
-prices_good = standardize(prices_good)
-prices_bad = standardize(prices_bad)
+prices_bad = np.mean(price_hist_list[np.where(preds<-.8)[0]], axis=0)
 
 plt.plot(prices_good, color='g')
 plt.plot(prices_bad, color='r')
 
+volumes_good = np.mean(features[:,1,:][np.where(preds>.5)[0]], axis=0)
+volumes_bad = np.mean(features[:,1,:][np.where(preds<-.8)[0]], axis=0)
+
+plt.plot(volumes_good, color='g')
+plt.plot(volumes_bad, color='r')
+
+exchanges_good = np.mean(features[:,2,:][np.where(preds>.5)[0]], axis=0)
+exchanges_bad = np.mean(features[:, 2,:][np.where(preds<-.8)[0]], axis=0)
+  
+plt.plot(exchanges_good, color='g')
+plt.plot(exchanges_bad, color='r')
 
 preds_zipped = zip(aandelen, preds)
 preds_zipped.sort(key = lambda t: t[1])
