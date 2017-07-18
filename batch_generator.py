@@ -68,7 +68,7 @@ if __name__ == '__main__':
     
     generator=BatchGenerator('/media/sander/samsungssd/tradosaurus/train_data/',
                              '/media/sander/samsungssd/tradosaurus/test_data/',
-                             1, 100, 1)
+                             1, 100, 45)
     x,y,h=generator.next_batch('train', True)
     
     

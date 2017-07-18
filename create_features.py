@@ -18,9 +18,10 @@ stocks.dropna(inplace=True)
 
 stocks.sort_values('Date', inplace=True)
 
+
 stocks = StockDataFrame.retype(stocks)
 
-stock_list = np.array(stocks.aandeel.unique().tolist())
+#stock_list = np.array(stocks.aandeel.unique().tolist())
 
 #np.random.shuffle(stock_list)
 #train_stocks = stock_list[:446]
@@ -38,7 +39,7 @@ stocks_test = stocks[stocks['date'] >= '2016-01-01']
 stocks_train['date'] = stocks_train.index
 stocks_test['date'] = stocks_test.index
 
-           
+
 def standardize(array):    
     mean = np.mean(array)
     std = np.std(array)    
@@ -47,6 +48,8 @@ def standardize(array):
 def indexize(array):    
     array = (array/array[0])
     return array*100-100
+
+
 
 ###############################################
 # Create features for filtering
@@ -189,17 +192,17 @@ def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
     
             temp_df = df[df.aandeel==aandeel]
     
-            price_list = np.array(temp_df.close.tolist())
-            volume_list = np.array(temp_df.volume.tolist())
-            exchange_list = np.array(temp_df.exchange_total.tolist())
+            price_list = np.array(temp_df.close)
+            volume_list = np.array(temp_df.volume)
+            exchange_list = np.array(temp_df.exchange_total)
     
             cursor = 0        
     
             while cursor < len(price_list)-n_hist:
     
-                price_history = np.array(indexize(price_list[cursor:cursor+n_hist]))
-                volume_history = np.array(indexize(volume_list[cursor:cursor+n_hist]))
-                exchange_history = np.array(indexize(exchange_list[cursor:cursor+n_hist]))
+                price_history = indexize(price_list[cursor:cursor+n_hist])
+                volume_history = indexize(volume_list[cursor:cursor+n_hist])
+                exchange_history = indexize(exchange_list[cursor:cursor+n_hist])
                 
                 x = np.concatenate([price_history, volume_history, exchange_history], axis=0).reshape([3, n_hist])
                 
@@ -208,7 +211,10 @@ def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
                 y = x_diff[:,n_future:]
                 x_diff = x_diff[:,:-n_future]                
                 y = y[0,:].reshape([1, n_hist-n_future*2])
-                                
+                
+                
+                #noise = np.random.normal(0,.5, [x_diff.shape[0], x_diff.shape[1]])                                
+                #x_diff = noise
                 features = np.concatenate([x_diff, y], axis=0)
                                 
                 np.save(outdir+aandeel+str(cursor), features)

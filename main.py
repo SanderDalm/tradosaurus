@@ -10,7 +10,7 @@ from sklearn.ensemble import RandomForestRegressor
 from scipy.stats import pearsonr
 
 from download_stock_data import download_and_save_stock_data
-from create_features import get_random_forest_features, get_nn_features
+from create_features import get_random_forest_features, get_nn_features, indexize
 from batch_generator import BatchGenerator
 from rnn import RNN
 
@@ -21,9 +21,9 @@ from rnn import RNN
 train_dir = '/media/sander/samsungssd/tradosaurus/train_data/'
 test_dir = '/media/sander/samsungssd/tradosaurus/test_data/'
 
-n_history = 100
+n_history = 20
 n_future = 1
-offset = 1
+offset = 20
 
 ###############################################
 # Download and save stock data
@@ -113,14 +113,14 @@ plt.plot(prices_norm, color='b')
 # Load RNN features
 ###############################################
 
-#import os
-#train_data_list = glob('/media/sander/samsungssd/tradosaurus/train_data/*.npy')        
-#test_data_list = glob('/media/sander/samsungssd/tradosaurus/test_data/*.npy')
-#        
-#for item in train_data_list:
-#   os.remove(item)
-#for item in test_data_list:
-#    os.remove(item)
+import os
+train_data_list = glob('/media/sander/samsungssd/tradosaurus/train_data/*.npy')        
+test_data_list = glob('/media/sander/samsungssd/tradosaurus/test_data/*.npy')
+        
+for item in train_data_list:
+   os.remove(item)
+for item in test_data_list:
+    os.remove(item)
 
 get_nn_features(n_history, n_future, offset, train_dir, test_dir)
 
@@ -151,6 +151,10 @@ nn.train(10000)
 #nn.save('models/checkpoint_1dag.ckpt')
 #nn.save('models/checkpoint_5dagen.ckpt')
 nn.plot_loss()
+
+###############################################
+# Eval RNN
+###############################################
 
 # Scatter predicted vs actual price change for batch of stocks
 generator = BatchGenerator(train_dir, test_dir, 100, n_history, n_future)
@@ -206,10 +210,6 @@ plt.legend(['Zero-line', 'Actual price change', 'Predicted price change'])
 # Prediction pipeline
 ############################################################
 
-def indexize(array):    
-    array = (array/array[0])
-    return array*100-100
-
 # Get last n_history days for each stock as list from stocks.csv
 stocks = pd.read_csv('data/stocks.csv')
 
@@ -219,6 +219,7 @@ aandelen = []
 price_hist_list = []
 
 for aandeel in tqdm(stocks.Aandeel.unique().tolist()):
+    
     temp_stocks = stocks[stocks.Aandeel==aandeel]
     temp_stocks.sort_values('Date', inplace=True)
     temp_stocks = temp_stocks[-n_history:]
@@ -241,7 +242,7 @@ for aandeel in tqdm(stocks.Aandeel.unique().tolist()):
         
         preds.append(pred[-1])
         aandelen.append(aandeel)
-        price_hist_list.append(price_history_normal) # probeer met beursen/volume
+        price_hist_list.append(price_history_normal) 
         features.append(x)
     else:
         continue
@@ -273,6 +274,16 @@ plt.plot(exchanges_bad, color='r')
 
 preds_zipped = zip(aandelen, preds)
 preds_zipped.sort(key = lambda t: t[1])
+
+print 'worst:'
+for i,j in preds_zipped[:10]:
+    print i,j
+
+print 'best:'    
+for i,j in preds_zipped[-12:]:
+    print i,j
+    
+    
 
 
 
