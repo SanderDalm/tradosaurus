@@ -1,3 +1,5 @@
+import os
+
 from tqdm import tqdm
 from glob import glob
 
@@ -49,7 +51,17 @@ def indexize(array):
     array = (array/array[0])
     return array*100-100
 
-
+#n_future=1
+#n_hist=4
+#x = np.array([[1,1.5,1.7,1.6], [10,15,17,16], [100,150,170,160]], dtype=np.float32)
+#x = np.array([indexize(x) for x in x])
+#x_next = x[:,n_future:]                
+#x_diff = x_next-x[:,:-n_future]
+#y = x_diff[:,n_future:]
+#x_diff = x_diff[:,:-n_future]                
+#y = y[0,:].reshape([1, n_hist-n_future*2])
+#
+#plt.plot(x_diff.T)
 
 ###############################################
 # Create features for filtering
@@ -184,6 +196,15 @@ def get_random_forest_features(n_future, n_hist, offset):
 
 def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
     
+    # Delete old data    
+    train_data_list = glob(train_dir+'*.npy')        
+    test_data_list = glob(test_dir+'*.npy')        
+            
+    for item in train_data_list:
+       os.remove(item)
+    for item in test_data_list:
+        os.remove(item)
+        
     def create_nn_features(df, n_hist, n_future, offset, outdir):
     
         df.sort_values(['aandeel', 'date'])
@@ -200,25 +221,27 @@ def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
     
             while cursor < len(price_list)-n_hist:
     
-                price_history = indexize(price_list[cursor:cursor+n_hist])
+                price_history = price_list[cursor:cursor+n_hist]
+                np.save(outdir+aandeel+str(cursor)+'_price_history', price_history)
+                
+                price_history = indexize(price_history)
                 volume_history = indexize(volume_list[cursor:cursor+n_hist])
                 exchange_history = indexize(exchange_list[cursor:cursor+n_hist])
                 
                 x = np.concatenate([price_history, volume_history, exchange_history], axis=0).reshape([3, n_hist])
                 
-                x_next = x[:,n_future:]                
+                x_next = x[:,n_future:]                                
                 x_diff = x_next-x[:,:-n_future]
                 y = x_diff[:,n_future:]
-                x_diff = x_diff[:,:-n_future]                
-                y = y[0,:].reshape([1, n_hist-n_future*2])
-                
+                x_diff = x_diff[:,:-n_future]                                                
+                y = y[0,:].reshape([1, n_hist-n_future*2]) 
                 
                 #noise = np.random.normal(0,.5, [x_diff.shape[0], x_diff.shape[1]])                                
                 #x_diff = noise
-                features = np.concatenate([x_diff, y], axis=0)
-                                
+                #x_diff = x_diff[0].reshape([1,n_future-n_hist*2])                
+                features = np.concatenate([x_diff, y], axis=0)        
                 np.save(outdir+aandeel+str(cursor), features)
-                np.save(outdir+aandeel+str(cursor)+'_price_history', price_history)
+                
                 cursor += offset
         
 

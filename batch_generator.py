@@ -1,7 +1,5 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-import os
-
 from glob import glob
 from six.moves import range
 
@@ -33,11 +31,11 @@ class BatchGenerator(object):
                 randint = np.random.randint(0,len(self.train_data_list)-1)                
                 
                 file_name = self.train_data_list[randint]
-                                
-                x = np.load(file_name)                   
-                                
+                
+                x = np.load(file_name)    
+                                                
                 x_batch.append(x[:3])
-                y_batch.append(x[3])                
+                y_batch.append(x[3])               
                 
                 if hist:
                     price_hist = np.load(file_name.replace('.npy', '_price_history.npy'))                   
@@ -50,8 +48,8 @@ class BatchGenerator(object):
                 
                 x = np.load(self.train_data_list[randint])                   
                                 
-                x_batch.append(x[:3,:])
-                y_batch.append(x[3,:])                
+                x_batch.append(x[:3])
+                y_batch.append(x[3])           
                 
                 if hist:
                     price_hist = np.load(file_name.replace('.npy', '_price_history.npy'))                   
@@ -68,11 +66,14 @@ if __name__ == '__main__':
     
     generator=BatchGenerator('/media/sander/samsungssd/tradosaurus/train_data/',
                              '/media/sander/samsungssd/tradosaurus/test_data/',
-                             1, 100, 45)
+                             50, 100, 1)
     x,y,h=generator.next_batch('train', True)
-    
+    #test = np.load('/media/sander/samsungssd/tradosaurus/train_data/NTAP100.npy')
     
     import matplotlib.pyplot as plt
+    from create_features import indexize
+    h = [indexize(n) for n in h]
+    h = np.array(h)
     plt.plot([0]*98, color='k')
     plt.plot(x[0,0,:], color='g')
     plt.plot(h[0,1:-1], color='b')
