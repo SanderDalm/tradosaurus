@@ -51,17 +51,7 @@ def indexize(array):
     array = (array/array[0])
     return array*100-100
 
-#n_future=1
-#n_hist=4
-#x = np.array([[1,1.5,1.7,1.6], [10,15,17,16], [100,150,170,160]], dtype=np.float32)
-#x = np.array([indexize(x) for x in x])
-#x_next = x[:,n_future:]                
-#x_diff = x_next-x[:,:-n_future]
-#y = x_diff[:,n_future:]
-#x_diff = x_diff[:,:-n_future]                
-#y = y[0,:].reshape([1, n_hist-n_future*2])
-#
-#plt.plot(x_diff.T)
+
 
 ###############################################
 # Create features for filtering
@@ -194,7 +184,7 @@ def get_random_forest_features(n_future, n_hist, offset):
 # Create features for NN
 ###############################################
 
-def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
+def get_nn_features(n_hist, n_future, offset, train_dir, test_dir, price_pred):
     
     # Delete old data    
     train_data_list = glob(train_dir+'*.npy')        
@@ -205,7 +195,7 @@ def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
     for item in test_data_list:
         os.remove(item)
         
-    def create_nn_features(df, n_hist, n_future, offset, outdir):
+    def create_nn_features(df, n_hist, n_future, offset, outdir, price_pred):
     
         df.sort_values(['aandeel', 'date'])
     
@@ -229,21 +219,34 @@ def get_nn_features(n_hist, n_future, offset, train_dir, test_dir):
                 exchange_history = indexize(exchange_list[cursor:cursor+n_hist])
                 
                 x = np.concatenate([price_history, volume_history, exchange_history], axis=0).reshape([3, n_hist])
-                
-                x_next = x[:,n_future:]                                
-                x_diff = x_next-x[:,:-n_future]
-                y = x_diff[:,n_future:]
-                x_diff = x_diff[:,:-n_future]                                                
-                y = y[0,:].reshape([1, n_hist-n_future*2]) 
-                
+                            
+                # Direct price prediction
+                if price_pred:
+                    y = x[0,n_future:].reshape([1, n_hist-n_future])
+                    x = x[:,:-n_future]
+                    
+                else:
+                    x_next = x[:,n_future:]                                
+                    x_diff = x_next-x[:,:-n_future]
+                    y = x_diff[:,n_future:]
+                    x_diff = x_diff[:,:-n_future]                                                
+                    y = y[0,:].reshape([1, n_hist-n_future*2]) 
+            
+                                
                 #noise = np.random.normal(0,.5, [x_diff.shape[0], x_diff.shape[1]])                                
                 #x_diff = noise
+                
+                # Price only
                 #x_diff = x_diff[0].reshape([1,n_future-n_hist*2])                
-                features = np.concatenate([x_diff, y], axis=0)        
+                
+                if price_pred:                    
+                    features = np.concatenate([x, y], axis=0)        
+                else:
+                    features = np.concatenate([x_diff, y], axis=0)        
                 np.save(outdir+aandeel+str(cursor), features)
                 
                 cursor += offset
         
 
-    create_nn_features(stocks_train, n_hist, n_future, offset, train_dir)    
-    create_nn_features(stocks_test, n_hist, n_future, offset, test_dir)
+    create_nn_features(stocks_train, n_hist, n_future, offset, train_dir, price_pred)    
+    create_nn_features(stocks_test, n_hist, n_future, offset, test_dir, price_pred)

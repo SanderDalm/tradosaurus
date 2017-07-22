@@ -19,6 +19,7 @@ class BatchGenerator(object):
         self.n_history = n_history
         self.n_future = n_future
         
+        
     def next_batch(self, train_test, hist=False):
 
         x_batch = []
@@ -32,10 +33,9 @@ class BatchGenerator(object):
                 
                 file_name = self.train_data_list[randint]
                 
-                x = np.load(file_name)    
-                                                
-                x_batch.append(x[:3])
-                y_batch.append(x[3])               
+                x = np.load(file_name)                
+                x_batch.append(x[:3]) 
+                y_batch.append(x[3])          
                 
                 if hist:
                     price_hist = np.load(file_name.replace('.npy', '_price_history.npy'))                   
@@ -44,17 +44,21 @@ class BatchGenerator(object):
                     
                 
             if train_test == 'test':
-                randint = np.random.randint(0,len(self.train_data_list)-1)                
+                randint = np.random.randint(0,len(self.test_data_list)-1)                
                 
-                x = np.load(self.train_data_list[randint])                   
+                x = np.load(self.test_data_list[randint])                   
                                 
-                x_batch.append(x[:3])
-                y_batch.append(x[3])           
+                x_batch.append(x[:3]) 
+                y_batch.append(x[3]) 
                 
                 if hist:
                     price_hist = np.load(file_name.replace('.npy', '_price_history.npy'))                   
                     price_hist_batch.append(price_hist)
-                
+        
+        #x_batch = np.array(x_batch)
+        #noise = np.random.normal(0,.2, [x_batch.shape[0], x_batch.shape[1], x_batch.shape[2]])                                        
+        #x_batch += noise
+        
         if hist:
             return np.array(x_batch).reshape([self.batch_size, 3, -1]),np.array(y_batch).reshape([self.batch_size, 1, -1]), np.array(price_hist_batch)
         else:

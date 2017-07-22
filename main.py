@@ -24,7 +24,9 @@ test_dir = '/media/sander/samsungssd/tradosaurus/test_data/'
 n_history = 100
 n_future = 1
 offset = 100
+price_pred = True
 
+    
 ###############################################
 # Download and save stock data
 ###############################################
@@ -36,17 +38,16 @@ offset = 100
 # Load RNN features and train RNN
 ###############################################
 
-get_nn_features(n_history, n_future, offset, train_dir, test_dir)
-
+get_nn_features(n_history, n_future, offset, train_dir, test_dir, price_pred)
 
 batch_size = 32
 generator = BatchGenerator(train_dir, test_dir, batch_size, n_history, n_future)
 
 
 summary_frequency=100
-num_nodes=256
-num_layers=3
-num_unrollings = n_history-n_future*2
+num_nodes=64
+num_layers=5
+num_unrollings = n_history-n_future
 batch_generator=generator
 input_shape = 3
 only_retrain_output=False
@@ -57,8 +58,8 @@ cell=tf.nn.rnn_cell.GRUCell
 nn = RNN(summary_frequency, num_nodes, num_layers, num_unrollings, n_future,
              batch_generator, input_shape, only_retrain_output, output_keep_prob,
              cell)
-nn.load('models/checkpoint_1dag.ckpt') 
-nn.train(1000)
+#nn.load('models/checkpoint_1dag.ckpt') 
+nn.train(20000)
 #nn.save('models/checkpoint_1dag.ckpt')
 #nn.save('models/checkpoint_5dagen.ckpt')
 nn.plot_loss()
@@ -68,12 +69,12 @@ nn.plot_loss()
 ###############################################
 
 # Scatter predicted vs actual price change for batch of stocks
-generator = BatchGenerator(train_dir, test_dir, 100, n_history, n_future)
+generator = BatchGenerator(train_dir, test_dir, 1000, n_history, n_future)
 x_batch, y_batch = generator.next_batch('test')
 
 preds = []
 labels = []
-for i in range(100):
+for i in range(1000):
     x, y = x_batch[i], y_batch[i]
     y = y.reshape([n_history-n_future*2, 1]) 
     x = x.reshape([1, 3, n_history-n_future*2]) 
@@ -91,9 +92,9 @@ labels = np.array(labels).reshape([len(labels)])
 pearsonr(preds, labels)
 
 # Determine mean difference beteween high low and normal cats
-np.mean(labels[np.where(preds>4)])
-np.mean(labels[np.where(preds<-4)])
-np.mean(labels[np.where(abs(preds)<4)])
+np.mean(labels[np.where(preds>3)])
+np.mean(labels[np.where(preds<-3)])
+np.mean(labels[np.where(abs(preds)<3)])
 
 # Determine acc
 score=np.zeros(len(labels))
@@ -220,7 +221,7 @@ importance=model.feature_importances_
 
 temp = np.concatenate([features_test, labels_test.reshape([len(labels_test),1])], axis=1)
 temp_df = pd.DataFrame(temp)
-col_list = ['col'+str(x) for x in range(len(temp_df.columns))]
+col_list = ['col'+str(n) for n in range(len(temp_df.columns))]
 col_list[-1]='profit'
 temp_df.columns = col_list
 
@@ -238,9 +239,9 @@ plt.plot(prices_good, color='g')
 plt.plot(prices_bad, color='r')
 plt.plot(prices_norm, color='b')
 
-temp_df[temp_df['pred']>.2]['profit'].describe()
-temp_df[temp_df['pred']<-.2]['profit'].describe()
-temp_df[abs(temp_df['pred'])<.2]['profit'].describe()
+temp_df[temp_df['pred']>.3]['profit'].describe()
+temp_df[temp_df['pred']<-.3]['profit'].describe()
+temp_df[abs(temp_df['pred'])<.3]['profit'].describe()
 
 
 ###############################################

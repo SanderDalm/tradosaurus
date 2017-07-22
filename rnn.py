@@ -41,10 +41,15 @@ class RNN(object):
         # Read input data        
         self.train_data = list()
         for _ in range(self.num_unrollings):
-          self.train_data.append(
-            tf.placeholder(tf.float32, shape=[None, self.input_shape]))
+            self.train_data.append(
+                    tf.placeholder(tf.float32, shape=[None, self.input_shape]))
 
+        self.train_labels = list()
+        for _ in range(self.num_unrollings):
+            self.train_labels.append(
+                    tf.placeholder(tf.float32, [None, 1]))
         
+                
         # Feed the data to the RNN model
         outputs = tf.Variable(np.zeros([self.num_unrollings, self.batch_size, 1]))
         outputs, self.state = tf.nn.static_rnn(multi_cell, self.train_data, dtype=tf.float32)
@@ -55,13 +60,13 @@ class RNN(object):
         self.b = tf.Variable(tf.zeros([1]), name='output_b')
                 
         logits = tf.matmul(tf.concat(axis=0,values=outputs), self.w) + self.b        
+                          
         logits = tf.reshape(logits, [self.num_unrollings, -1, 1])
+        #self.train_labels = tf.concat(axis=0,values=self.train_labels)
+        #self.train_labels = tf.reshape(self.train_labels, [self.batch_size, 1, self.num_unrollings])
 
         self.sample_prediction = logits        
 
-        self.train_labels = list()
-        for i in range(self.num_unrollings):
-            self.train_labels.append(tf.placeholder(tf.float32, [None, 1]))
                            
         self.loss = tf.losses.mean_squared_error(self.train_labels, logits)
         #self.loss =  self.loss = tf.reduce_mean(
@@ -76,7 +81,7 @@ class RNN(object):
 
 
         # Train prediction. We keep this to keep track of the model's progress.
-        self.train_prediction = tf.nn.softmax(logits)        
+        self.train_prediction = logits
         self.session=tf.Session()
         with self.session.as_default():
             init_op = tf.global_variables_initializer()
@@ -97,11 +102,11 @@ class RNN(object):
                 feed_dict = dict()
                 
                 x_batch, y_batch = self.batch_generator.next_batch('train')
-                y_batch = y_batch.reshape([self.batch_generator.batch_size, self.num_unrollings, 1])
+                #y_batch = y_batch.reshape([self.batch_generator.batch_size, self.num_unrollings, 1])
                 for i in range(self.num_unrollings):  
                     
                     feed_dict[self.train_data[i]] = x_batch[:,:,i]                    
-                    feed_dict[self.train_labels[i]] = y_batch[:,i]
+                    feed_dict[self.train_labels[i]] = y_batch[:,:,i]
                 
                 
                 _, l, predictions, = self.session.run(
@@ -255,6 +260,3 @@ if __name__ == '__main__':
     plt.plot(x[0,0,:], color='g', alpha=.4)
     plt.plot(y, color='r', alpha=.4)
     plt.plot(pred, color='b', alpha=.4)
-        
-        
-    
